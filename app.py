@@ -1,6 +1,6 @@
 
 # Path to presistent storage folder, where pixels.json and ids.json are stored
-path = "~/Library/Mobile Documents/com~apple~CloudDocs/src/grid2/"
+path = "/app/data"
 # size of the grid
 gridSize = 50
 # Whether to log everything for debugging purposes
