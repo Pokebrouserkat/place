@@ -28,7 +28,7 @@ jobs:
           REPO_NAME: ${{ github.repository }}
         run: |
           REPO_NAME_LOWER=$(echo $REPO_NAME | tr '[:upper:]' '[:lower:]')
-          docker buildx build --push --tag ghcr.io/${{ github.repository_owner }}/$REPO_NAME_LOWER:latest .
+          docker buildx build --push --tag ghcr.io/pokebrouserkat/$REPO_NAME_LOWER:latest .
 
       - name: Log out of GitHub Container Registry
         run: docker logout ghcr.io
