@@ -9,11 +9,22 @@
         const tileColors = {};
         var canvasSize = 50;
         var rateLimit = -1;
+        var canPlace = false;
+        var didGetCanPlace = false;
         ws.onmessage = (event) => {
             // Is it a number?
             if (!isNaN(event.data)) {
                 if (rateLimit === -1) {
                     rateLimit = parseInt(event.data);
+                    return;
+                }
+                if (!didGetCanPlace) {
+                    didGetCanPlace = true;
+                    setTimeout(function() {
+                        canPlace = true;
+                        document.getElementById("colours").classList.remove("hidden");
+                        document.getElementsByTagName("audio")[0].play();
+                    }, (parseInt(event.data) + 1) * 1000);
                     return;
                 }
                 canvasSize = parseInt(event.data);
@@ -29,7 +40,7 @@
         };
         // Authenticate the user
         ws.onopen = () => {
-            ws.send(window.location.hash.substring(window.location.hash.indexOf("access_token=") + 13).split("&")[0].split("/")[0]);
+            ws.send("auth");
         };
         window.location.hash = "";
         var canvas;
@@ -75,8 +86,6 @@
                 }
             }
         }
-
-        var canPlace = false;
 
         function handleTileClick(x, y, mouseX, mouseY) {
             if (chosenColor) {
@@ -368,7 +377,7 @@
     </style>
 </head>
 <body>
-    <div id="colours">
+    <div id="colours" class="hidden">
         <button onclick="selectColour(this)" id="red"></button>
         <button onclick="selectColour(this)" id="green"></button>
         <button onclick="selectColour(this)" id="blue"></button>
