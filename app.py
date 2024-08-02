@@ -14,9 +14,6 @@ port = 8080
 down = False
 # Path to boop.mp3, boop.wav, etc
 boops = []
-# TEMPORARY: Open the web browser
-import webbrowser
-webbrowser.open("http://localhost:" + str(port))
 
 #import websockets
 #import asyncio
