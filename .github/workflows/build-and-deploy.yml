@@ -23,6 +23,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debugging thing to see what is going on
+        run: |
+          pwd
+          ls
+
       - name: Build and push Docker image
         run: |
           docker buildx build --push --tag ghcr.io/pokebrouserkat/place:latest .
