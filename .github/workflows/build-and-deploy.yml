@@ -30,7 +30,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker buildx build --push --tag ghcr.io/pokebrouserkat/place:latest .
+          docker buildx build --push --tag ghcr.io/pokebrouserkat/place:latest -f Dockerfile .
 
       - name: Log out of GitHub Container Registry
         run: docker logout ghcr.io
