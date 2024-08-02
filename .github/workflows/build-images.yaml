@@ -1,0 +1,20 @@
+name: Build and Deploy Images
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-backend:
+    uses: ./.github/workflows/docker-publish-backend.yaml
+
+  deploy-main:
+    needs:
+      - build-backend
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/helm-deploy-main.yaml
+    secrets:
+      LKE_CONTEXT: ${{ secrets.LKE_CONTEXT }}

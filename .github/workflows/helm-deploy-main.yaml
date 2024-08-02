@@ -1,0 +1,33 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_call:
+    secrets:
+      LKE_CONTEXT:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up kubeconfig
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.LKE_CONTEXT }}" | base64 --decode > ~/.kube/config
+        chmod 600 ~/.kube/config
+
+    - name: Install Helm
+      uses: azure/setup-helm@v1
+      with:
+        version: v3.14.3
+
+    - name: Deploy to Kubernetes
+      run: |
+        helm upgrade --install place helm/place \
+        --set tag=main \
+        --set hostname=place.memetech.ca \
+        --namespace place

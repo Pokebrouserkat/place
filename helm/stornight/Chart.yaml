@@ -1,0 +1,4 @@
+apiVersion: v2
+name: place
+description: A Helm chart
+version: 0.1.0
