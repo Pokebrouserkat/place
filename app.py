@@ -1,11 +1,11 @@
 # Path to presistent storage folder, where pixels.json and ids.json are stored
-path = "/app/data"
+path = "app/data"
 # Path to index.html, rather than, well, """<!DOCTYPE html>...""" in the code
 index = "index.html"
 # size of the grid
 gridSize = 50
 # Whether to log everything for debugging purposes
-logs = False
+logs = True
 # Delay between pixel placements in seconds
 timer = 60 * 5
 # Port to run the server on
@@ -14,6 +14,9 @@ port = 8080
 down = False
 # Path to boop.mp3, boop.wav, etc
 boops = []
+# TEMPORARY: Open the web browser
+import webbrowser
+webbrowser.open("http://localhost:" + str(port))
 
 #import websockets
 #import asyncio
@@ -98,6 +101,22 @@ def server(websocket):
     # Send them the current state of the grid
     log("Sending timer")
     websocket.send(str(timer))
+    # Send the time they have left until they can place another pixel, in seconds
+    #websocket.send(str(timer - (time.time() - ids[id]))) # This line is broken... Why?
+    #str(time.time() - ids[id]) # Will simply calculating what to send to the client cause problems?
+    # Yes, it will. For whatever reason, this calculation causes the server to crash, which is caught, but still crashes the client, which causes it to relaunch, and we get a loop of crashing and relaunching.
+    # So, what is failing..? Is it ids[id]?
+    #ids[id]
+    # Yes... It is. Why?
+    # "KeyError: 'auth'"
+    # Huh, the seever can't find the ID in the dictionary. Shouldn't it be set to time.time() when the ID is added?
+    if id not in ids:
+        log("New ID added")
+        ids[id] = time.time()
+        saveIds()
+    # Now, let's try again
+    websocket.send(str(timer - (time.time() - ids[id])))
+    # Send the grid size
     log("Sending grid size")
     websocket.send(str(gridSize))
     if logs:
@@ -109,15 +128,14 @@ def server(websocket):
     else:
         for pixel in pixels:
             websocket.send(pixel)
-    if id not in ids:
-        log("New ID added")
-        ids[id] = time.time()
-        saveIds()
-    else:
-        log("ID already exists")
+#    if id not in ids:
+#        log("New ID added")
+#        ids[id] = time.time()
+#        saveIds()
+#    else:
+#        log("ID already exists")
     # Wait for messages
     try:
-        #async for message in websocket:
         while not down:
             message = websocket.receive()
             log("Message (", end=message)
@@ -125,14 +143,8 @@ def server(websocket):
                 log(") Ignored - server is down")
                 return
             # Did they last send a message less than 5 minutes ago?
-            # This is a sort of rate limit, it's kind of the whole game
-            #if time.time() - ids[id] < 300:
-            #if time.time() - ids[id] < 5: # For testing, 5 seconds instead of 5 minutes
-            #if False: # For testing, no rate limit
             if time.time() - ids[id] < timer:
                 log(") Rate limited")
-                # Close the connection
-                # Wait, let's still update the time so they can't just reconnect
                 ids[id] = time.time()
                 return
             ids[id] = time.time()
@@ -142,23 +154,30 @@ def server(websocket):
                 data = json.loads(message)
                 if "colour" in data:
                     data["color"] = data["colour"] # I'm Canadian, but the parsing below uses American spelling since it's slightly shorter
+                # For performance reasons, pre-serialise the message
+                message = json.dumps({"x": data["x"], "y": data["y"], "color": data["color"]})
                 # Check if it's valid
                 # Only supported colours are within 3 bits per pixel, that's one bit per channel,
                 #00 or #ff for each channel.
+                # The client will never send non-capitalised hex codes, but it's not technically invalid
                 if "x" in data and "y" in data and "color" in data and data["color"][0] == "#" and data["color"][1:3] in ["00", "ff", "FF"] and data["color"][3:5] in ["00", "ff", "FF"] and data["color"][5:7] in ["00", "ff", "FF"]:
                     log(") Valid")
                     # Set the pixel
-                    #pixels.append(message)
-                    # For security reasons, reconstruct the message from the data
-                    pixels.append(json.dumps({"x": data["x"], "y": data["y"], "color": data["color"]}))
+                    pixels.append(message)
                     savePixels()
                     # Send the message to all clients
                     if logs:
+                        tolog = "\n"
                         print("Updating clients: 0/" + str(len(clients)), end=" (0%)")
                         for i, client in enumerate(clients):
                             print("\rUpdating clients: " + str(i + 1) + "/" + str(len(clients)) + " (" + str(round((i+1)/len(clients)*100)), end="%)")
-                            client.send(message)
-                        print()
+                            try:
+                                client.send(message)
+                            except Exception as e:
+                                #log("Failed to send to client - ", e.__class__.__name__, " ", str(e))
+                                #log("Client index:", i)
+                                tolog += "Failed to send to client " + str(i) + " - " + e.__class__.__name__ + " " + str(e) + "\nClient index: " + str(i) + "\n"
+                        print(tolog)
                     else:
                         for client in clients:
                             # Why re-serialise the message when it's the same data that was sent?
@@ -223,7 +242,7 @@ def boop():
             for boop in boops:
                 if boop.endswith(".mp3"):
                     return flask.send_file(boop)
-        # We have no boops that match what the client asked for, so here are some special cases
+    # We have no boops that match what the client asked for, so here are some special cases
         if "audio/*" in accept or "*/*" in accept:
             # Find the first boop
             return flask.send_file(boops[0])
