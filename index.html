@@ -4,14 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Place</title>
-    <!-- the share feature is broken, but I got it to work:
-     https://chatgpt.com/share/05cf1a3e-e302-45fb-a69f-f87221628afa
-     https://chatgpt.com/share/67f2d0f5-94c7-4f07-81f5-264eb229c298
-     https://chatgpt.com/share/89eb18cd-237a-4cea-88d2-a92c7ce6afe0
-    -->
     <script>
-        // *Change this to the correct URL
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket("/ws");
         const tileColors = {};
         var canvasSize = 50;
         var rateLimit = -1;
@@ -28,17 +22,16 @@
             const data = JSON.parse(event.data);
             tileColors[`${data.x},${data.y}`] = data.color;
             //drawGrid();
-            // *And here I was writing a complex binary parser to convert 4-byte integers to pixel coordinates and turning a byte into a colour
         };
         ws.onclose = () => {
-            // *Not well-implimented
+            // THIS IS A TEMPORARY FIX
             location.reload();
         };
         // Authenticate the user
         ws.onopen = () => {
-            ws.send(window.location.hash.substring(window.location.hash.indexOf('access_token=') + 13).split('&')[0].split('/')[0]);
+            ws.send(window.location.hash.substring(window.location.hash.indexOf("access_token=") + 13).split("&")[0].split("/")[0]);
         };
-        window.location.hash = '';
+        window.location.hash = "";
         var canvas;
         var chosenColor = null;
         var ctx;
@@ -53,7 +46,8 @@
         const acceleration = 0.4;
         const deceleration = 0.8;
 
-        function resizeCanvas() {
+        //function resizeCanvas() {
+        const resizeCanvas = () => { // Bleh
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             //drawGrid();
@@ -65,78 +59,109 @@
             const rows = Math.ceil(canvas.height / (tileSize * zoom)) + 2;
             const startX = Math.floor(offsetX) - Math.floor(cols / 2);
             const startY = Math.floor(offsetY) - Math.floor(rows / 2);
-
-            // *Meme Tech update: ChatGPT was drawing lines individually, which was slow, so I'm setting the BG to black in advance
-            ctx.fillStyle = '#000000';
+            ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // *Meme Tech update (again): I noticed some heavy calculation in a hefty loop here, so I'm variable-ify-ing it
             var tileSizeTimesZoom = tileSize * zoom;
-            //var tileSizeTimesZoomMinusOne = tileSizeTimesZoom - 1;
-            //var tileSizeTimesZoomMinusOne = tileSize * (zoom - 1);
             var tileSizeTimesZoomMinusOne = (tileSize - 1) * zoom;
-            //if (Math.abs(tileSizeTimesZoomMinusOne - tileSizeTimesZoom) < 2) {
-            //    tileSizeTimesZoomMinusOne = tileSizeTimesZoom; // *Meme Tech note: Remove outline when zoomed out enough for it to cause issues
-            //}
-            //var floorColsDiv2 = Math.floor(cols / 2);
-            //var floorRowsDiv2 = Math.floor(rows / 2);
-            // *Meme Tech idea: Isn't that just a bit shift?
             var floorColsDiv2 = cols >> 1;
             var floorRowsDiv2 = rows >> 1;
-
-            //const canvasSize = 100
-
             for (let x = startX; x < startX + cols; x++) {
                 for (let y = startY; y < startY + rows; y++) {
-                    // *Meme Tech update (yet again): I decided to make the canvas only white within 1000 pixels of the center
-                    //const color = tileColors[`${x},${y}`] || '#ffffff';
-                    const color = tileColors[`${x},${y}`] || (((Math.abs(x) < canvasSize) && (Math.abs(y) < canvasSize)) ? '#ffffff' : '#000000');
+                    const color = tileColors[`${x},${y}`] || (((Math.abs(x) < canvasSize) && (Math.abs(y) < canvasSize)) ? "#ffffff" : "#000000");
                     ctx.fillStyle = color;
                     const drawX = (x - offsetX + floorColsDiv2) * tileSizeTimesZoom;
                     const drawY = (y - offsetY + floorRowsDiv2) * tileSizeTimesZoom;
-                    //ctx.fillRect(drawX, drawY, tileSize * zoom, tileSize * zoom);
                     ctx.fillRect(drawX, drawY, tileSizeTimesZoomMinusOne, tileSizeTimesZoomMinusOne);
-                    //ctx.strokeStyle = '#cccccc';
-                    //ctx.strokeRect(drawX, drawY, tileSize * zoom, tileSize * zoom);
                 }
             }
         }
+
+        var canPlace = false;
 
         function handleTileClick(x, y, mouseX, mouseY) {
-            //selectedTile = { x, y };
-            // *Meme Tech update: IT'S OFF!
-            //selectedTile = { x: x - 1, y: y - 2 };
             if (chosenColor) {
-                //const { x, y } = selectedTile;
                 const confirmChange = confirm("Change the tile colour?");
                 if (confirmChange) {
-                    //tileColors[`${x-1},${y-2}`] = chosenColor; // *Meme Tech note: IT'S STILL OFF! (I have no idea why, but this fix works when fully zoomed in, so it's fine)
                     ws.send(JSON.stringify({ x: x - 1, y: y - 2, color: chosenColor }));
-                    // Here you can add code to start the 5-minute timer
+                    // This is where the timer comes in
+                    canPlace = false;
+                    //document.getElementById("colours").classList.add("hidden");
+                    document.getElementById("red").classList.remove("selected");
+                    document.getElementById("green").classList.remove("selected");
+                    document.getElementById("blue").classList.remove("selected");
+                    document.getElementById("yellow").classList.remove("selected");
+                    document.getElementById("purple").classList.remove("selected");
+                    document.getElementById("cyan").classList.remove("selected");
+                    document.getElementById("white").classList.remove("selected");
+                    document.getElementById("black").classList.remove("selected");
+                    document.getElementById("red").classList.add("hidden");
+                    setTimeout(function() {
+                        document.getElementById("green").classList.add("hidden");
+                        setTimeout(function() {
+                            document.getElementById("blue").classList.add("hidden");
+                            setTimeout(function() {
+                                document.getElementById("yellow").classList.add("hidden");
+                                setTimeout(function() {
+                                    document.getElementById("purple").classList.add("hidden");
+                                    setTimeout(function() {
+                                        document.getElementById("cyan").classList.add("hidden");
+                                        setTimeout(function() {
+                                            document.getElementById("white").classList.add("hidden");
+                                            setTimeout(function() {
+                                                document.getElementById("black").classList.add("hidden");
+                                                if (rateLimit > 1) {
+                                                    setTimeout(function() {
+                                                        document.getElementById("colours").classList.add("hidden");
+                                                        setTimeout(function() {
+                                                            document.getElementById("red").classList.remove("hidden");
+                                                            document.getElementById("green").classList.remove("hidden");
+                                                            document.getElementById("blue").classList.remove("hidden");
+                                                            document.getElementById("yellow").classList.remove("hidden");
+                                                            document.getElementById("purple").classList.remove("hidden");
+                                                            document.getElementById("cyan").classList.remove("hidden");
+                                                            document.getElementById("white").classList.remove("hidden");
+                                                            document.getElementById("black").classList.remove("hidden");
+                                                        }, 100);
+                                                    }, 100);
+                                                }
+                                            }, 100);
+                                        }, 100);
+                                    }, 100);
+                                }, 100);
+                            }, 100);
+                        }, 100);
+                    }, 100);
+
+                    setTimeout(function() {
+                        canPlace = true;
+                        document.getElementById("colours").classList.remove("hidden");
+                        document.getElementsByTagName("audio")[0].play();
+                    }, rateLimit * 1000);
+                    //drawGrid();
                 }
-                //drawGrid();
             }
         }
 
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener("keydown", (e) => {
             keysPressed[e.key] = true;
         });
 
-        document.addEventListener('keyup', (e) => {
+        document.addEventListener("keyup", (e) => {
             keysPressed[e.key] = false;
         });
 
         function updateOffset() {
-            if (keysPressed['ArrowUp'] && !keysPressed['ArrowDown']) {
+            if (keysPressed["ArrowUp"] && !keysPressed["ArrowDown"]) {
                 velocity.y = Math.max(velocity.y - acceleration, -maxSpeed);
-            } else if (keysPressed['ArrowDown'] && !keysPressed['ArrowUp']) {
+            } else if (keysPressed["ArrowDown"] && !keysPressed["ArrowUp"]) {
                 velocity.y = Math.min(velocity.y + acceleration, maxSpeed);
             } else {
                 velocity.y = Math.abs(velocity.y) < deceleration ? 0 : velocity.y + (velocity.y > 0 ? -deceleration : deceleration);
             }
 
-            if (keysPressed['ArrowLeft'] && !keysPressed['ArrowRight']) {
+            if (keysPressed["ArrowLeft"] && !keysPressed["ArrowRight"]) {
                 velocity.x = Math.max(velocity.x - acceleration, -maxSpeed);
-            } else if (keysPressed['ArrowRight'] && !keysPressed['ArrowLeft']) {
+            } else if (keysPressed["ArrowRight"] && !keysPressed["ArrowLeft"]) {
                 velocity.x = Math.min(velocity.x + acceleration, maxSpeed);
             } else {
                 velocity.x = Math.abs(velocity.x) < deceleration ? 0 : velocity.x + (velocity.x > 0 ? -deceleration : deceleration);
@@ -150,11 +175,10 @@
             updateOffset();
             drawGrid();
             requestAnimationFrame(animate);
-            // *Meme Tech update: Let's add the x, y and zoom to the hash
-            window.location.hash = (offsetX || offsetY || zoom) ? `#x=${offsetX}&y=${offsetY}&zoom=${zoom}` : '';
+            window.location.hash = (offsetX || offsetY || zoom) ? `#x=${offsetX}&y=${offsetY}&zoom=${zoom}` : "";
         }
 
-        window.addEventListener('wheel', (e) => {
+        window.addEventListener("wheel", (e) => {
             e.preventDefault();
             const zoomFactor = 1.1;
             if (e.deltaY > 0) {
@@ -162,59 +186,71 @@
             } else {
                 zoom *= zoomFactor;
             }
-            zoom = Math.max(0.1, Math.min(zoom, 10)); // Limit zoom levels
+            zoom = Math.max(0.2, Math.min(zoom, 20)); // If you zoom out too much, it lags really badly
             //drawGrid();
         });
 
-        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener("resize", resizeCanvas);
 
         // Prevent default scrolling behavior
-        window.addEventListener('keydown', (e) => {
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        window.addEventListener("keydown", (e) => {
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
                 e.preventDefault();
             }
         });
         function selectColour(button) {
-            const buttons = document.querySelectorAll('button');
+            const buttons = document.querySelectorAll("button");
             buttons.forEach((button) => {
-                button.classList.remove('selected');
+                button.classList.remove("selected");
             });
-            button.classList.add('selected');
-            //chosenColor = button.style.backgroundColor;
-            // backgroundColor is empty, so we use the id
+            button.classList.add("selected");
             switch (button.id) {
-                case 'red':
-                    chosenColor = '#ff0000';
+                case "red":
+                    chosenColor = "#ff0000";
                     break;
-                case 'green':
-                    chosenColor = '#00ff00';
+                case "green":
+                    chosenColor = "#00ff00";
                     break;
-                case 'blue':
-                    chosenColor = '#0000ff';
+                case "blue":
+                    chosenColor = "#0000ff";
                     break;
-                case 'yellow':
-                    chosenColor = '#ffff00';
+                case "yellow":
+                    chosenColor = "#ffff00";
                     break;
-                case 'purple':
-                    chosenColor = '#ff00ff';
+                case "purple":
+                    chosenColor = "#ff00ff";
                     break;
-                case 'cyan':
-                    chosenColor = '#00ffff';
+                case "cyan":
+                    chosenColor = "#00ffff";
                     break;
-                case 'white':
-                    chosenColor = '#ffffff';
+                case "white":
+                    chosenColor = "#ffffff";
                     break;
-                case 'black':
-                    chosenColor = '#000000';
+                case "black":
+                    chosenColor = "#000000";
                     break;
             }
         }
+        document.addEventListener("DOMContentLoaded", () => {
+            canvas = document.getElementById("canvas");
+            ctx = canvas.getContext("2d");
+            canvas.addEventListener("click", (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const x = Math.floor((mouseX / (tileSize * zoom)) + offsetX - Math.floor(canvas.width / (tileSize * zoom) / 2));
+                const y = Math.floor((mouseY / (tileSize * zoom)) + offsetY - Math.floor(canvas.height / (tileSize * zoom) / 2));
+                handleTileClick(x, y, e.clientX, e.clientY);
+            });
+            resizeCanvas();
+            animate();
+        });
     </script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #eee;
+            background-color: #000000;
         }
         #colours {
             position: absolute;
@@ -222,14 +258,6 @@
         }
         canvas {
             display: block;
-        }
-        button {
-            width: 5vh;
-            height: 5vh;
-            margin: 0.5vh;
-            border-radius: 0;
-            cursor: pointer;
-            transition: all 0.1s;
         }
         #red {
             background-color: #ff0000;
@@ -266,11 +294,6 @@
         button:hover {
             transform: scale(1.1);
         }
-        /*
-        button:active {
-            transform: scale(0.9);
-            box-shadow: 0 0 1vh 1vh #000000;
-        }*/
         #red:active {
             box-shadow: 0 0 1vh 1vh #aa0000;
         }
@@ -295,10 +318,6 @@
         #black:active {
             box-shadow: 0 0 1vh 1vh #333333;
         }
-        /*
-        .selected {
-            box-shadow: 0 0 0.5vh 0.5vh #000000;
-        }*/
         #red.selected {
             box-shadow: 0 0 0.5vh 0.5vh #aa0000;
         }
@@ -323,6 +342,14 @@
         #black.selected {
             box-shadow: 0 0 0.5vh 0.5vh #333333;
         }
+        #red, #green, #blue, #yellow, #purple, #cyan, #white, #black {
+            transition: all 0.5s;
+            width: 5vh;
+            height: 5vh;
+            margin: 0.5vh;
+            border-radius: 0;
+            cursor: pointer;
+        }
         #colours {
             display: flex;
             flex-wrap: wrap;
@@ -330,6 +357,12 @@
             top: 0;
             left: 0;
             z-index: 1;
+            transition: all 1s;
+        }
+        .hidden {
+            filter: blur(1vh);
+            opacity: 0;
+            transition: all 1s;
         }
     </style>
 </head>
@@ -346,19 +379,6 @@
     </div>
     <!-- TODO: Add a timer to show the remaining time -->
     <canvas id="canvas"></canvas>
-    <script>
-        canvas = document.getElementById('canvas');
-        ctx = canvas.getContext('2d');
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            const x = Math.floor((mouseX / (tileSize * zoom)) + offsetX - Math.floor(canvas.width / (tileSize * zoom) / 2));
-            const y = Math.floor((mouseY / (tileSize * zoom)) + offsetY - Math.floor(canvas.height / (tileSize * zoom) / 2));
-            handleTileClick(x, y, e.clientX, e.clientY);
-        });
-        resizeCanvas();
-        animate();
-    </script>
+    <audio src="/boop" preload="auto" style="display: none;" />
 </body>
 </html>
