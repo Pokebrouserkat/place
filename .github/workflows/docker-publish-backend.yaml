@@ -5,12 +5,9 @@ name: docker-backend
 # separate terms of service, privacy policy, and support
 # documentation.
 
+
 on:
   workflow_call:
-    inputs:
-      VUE_APP_API:
-        required: true
-        type: string
 
 env:
   # Use docker.io for Docker Hub if empty
