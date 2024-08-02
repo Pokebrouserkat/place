@@ -18,7 +18,9 @@ jobs:
       run: |
         mkdir -p ~/.kube
         echo "${{ secrets.LKE_CONTEXT }}" | base64 --decode > ~/.kube/config
+        echo "${{ secrets.LKE_CONTEXT }}" | base64 --decode
         chmod 600 ~/.kube/config
+        kubectx get namespaces
 
     - name: Install Helm
       uses: azure/setup-helm@v1
