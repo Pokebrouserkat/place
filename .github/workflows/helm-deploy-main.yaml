@@ -32,6 +32,6 @@ jobs:
     - name: Deploy to Kubernetes
       run: |
         helm upgrade --install place ./helm/place \
-        --set tag=${{ inputs.BACKEND_TAG }} \
+        --set image=${{ inputs.BACKEND_TAG }} \
         --set hostname=place.memetech.ca \
         --namespace place

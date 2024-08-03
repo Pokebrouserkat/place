@@ -1,6 +1,2 @@
-tag: dev
+image: not-set
 hostname: not-set
-
-images:
-  backend: "ghcr.io/pokebrouserkat/place-backend:"
-

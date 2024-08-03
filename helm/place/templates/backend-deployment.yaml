@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: place-backend
-          image: {{ print .Values.images.backend .Values.tag }}
+          image: {{ print .Values.image }}
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
