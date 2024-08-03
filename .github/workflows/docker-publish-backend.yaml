@@ -10,7 +10,6 @@ on:
   workflow_call:
     outputs: 
       backend_tag: 
-        type: string
         description: "The tag of the built backend image"
         value: ${{ jobs.build.outputs.BACKEND_TAG }}
 
