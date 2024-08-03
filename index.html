@@ -5,24 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Place</title>
     <script>
-        // TEMPORARY DEBUG MEASURE
-        alert("Version 1.1"); // I mean, not really, but close enough
         const ws = new WebSocket("/ws");
         const tileColors = {};
         var canvasSize = 50;
         var rateLimit = -1;
         var canPlace = false;
         var didGetCanPlace = false;
+        var canvas;
+        var chosenColor = null;
+        var ctx;
+        const tileSize = 20;
+        let zoom = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let selectedTile = null;
+        const keysPressed = {};
+        const velocity = { x: 0, y: 0 };
+        const maxSpeed = 10;
+        const acceleration = 0.4;
+        const deceleration = 0.8;
+        console.log("Loaded");
         ws.onmessage = (event) => {
             // Is it a number?
             if (!isNaN(event.data)) {
                 if (rateLimit === -1) {
+                    console.log("Setting rate limit to " + event.data + " seconds");
                     rateLimit = parseInt(event.data);
                     return;
                 }
                 if (!didGetCanPlace) {
+                    console.log("Waiting " + event.data + " seconds before allowing pixel placement");
                     didGetCanPlace = true;
                     setTimeout(function() {
+                        console.log("Ready to place first pixel");
                         canPlace = true;
                         document.getElementById("colours").classList.remove("hidden");
                         document.getElementsByTagName("audio")[0].play();
@@ -32,12 +47,14 @@
                 canvasSize = parseInt(event.data);
                 return;
             }
+            console.log("Updating tile colours: " + event.data);
             const data = JSON.parse(event.data);
-            tileColors[`${data.x},${data.y}`] = data.color;
+            tileColors[${data.x},${data.y}] = data.color;
             //drawGrid();
         };
         ws.onclose = () => {
             // THIS IS A TEMPORARY FIX
+            console.log("Disconnected, reloading...");
             location.reload();
         };
         // Authenticate the user
@@ -45,44 +62,64 @@
         //    ws.send("auth");
         //};
 
+        console.log("Getting account info")
+
         var username = localStorage.getItem("username");
         var password = localStorage.getItem("password");
 
         // Hash handling, by Copilot
         if (window.location.hash) {
-            const hash = window.location.hash.slice(1);
-            const params = hash.split("&");
-            for (const param of params) {
+            for (const param of window.location.hash.slice(1).split("&")) {
+                console.log(param);
                 const [key, value] = param.split("=");
                 switch (key) {
                     case "x":
                         offsetX = parseFloat(value);
+                        console.log("Navigating to X position");
                         break;
                     case "y":
+                        console.log("Navigating to Y position");
                         offsetY = parseFloat(value);
                         break;
                     case "zoom":
+                        console.log("Setting zoom");
                         zoom = parseFloat(value);
                         break;
                     case "name":
+                        console.log("Setting username");
                         username = value;
                         break;
                     case "pass":
                     case "password":
                     case "pswd":
+                        console.log("Setting password");
                         password = value;
+                        break;
+                    default:
+                        console.log("Ignoring");
+                        break; // redundant break
                 }
             }
         }
 
         if (!username) {
+            console.log("No username set, asking for one");
             username = prompt("Enter your username:");
         }
         if (!password) {
-            password = prompt("Enter your password:");
+            console.log("No password set, asking for one");
+            password = prompt("Enter your password:", "(not hidden)");
         }
-        localStorage.setItem("username", username);
-        localStorage.setItem("password", password);
+        if (username) {
+            localStorage.setItem("username", username);
+        }
+        if (password) {
+            localStorage.setItem("password", password);
+        }
+        if (!(username && password)) {
+            console.log("Username or password is falsey value (like blank string, or unset)");
+            console.log(username, ", ", password, ", ", !!username, ", ", !!password);
+        }
 
         // Convert the username and password into an ID by concatenating them and hashing them
         // ChatGPT wrote this function:
@@ -109,30 +146,20 @@
             }
             return tohex(H0) + tohex(H1) + tohex(H2) + tohex(H3) + tohex(H4);
         }
+        console.log("sha1 hashing username and password");
         const id = sha1(username + password);
         ws.onopen = () => {
+            console.log("Sending hash to server");
             ws.send(id);
         };
 
         window.location.hash = "";
-        var canvas;
-        var chosenColor = null;
-        var ctx;
-        const tileSize = 20;
-        let zoom = 1;
-        let offsetX = 0;
-        let offsetY = 0;
-        let selectedTile = null;
-        const keysPressed = {};
-        const velocity = { x: 0, y: 0 };
-        const maxSpeed = 10;
-        const acceleration = 0.4;
-        const deceleration = 0.8;
 
         //function resizeCanvas() {
         const resizeCanvas = () => { // Bleh
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            console.log("Canvas size  is ", window.innerWidth, ", ", window.innerHeight);
             //drawGrid();
         }
 
@@ -150,7 +177,7 @@
             var floorRowsDiv2 = rows >> 1;
             for (let x = startX; x < startX + cols; x++) {
                 for (let y = startY; y < startY + rows; y++) {
-                    const color = tileColors[`${x},${y}`] || (((Math.abs(x) < canvasSize) && (Math.abs(y) < canvasSize)) ? "#ffffff" : "#000000");
+                    const color = tileColors[${x},${y}] || (((Math.abs(x) < canvasSize) && (Math.abs(y) < canvasSize)) ? "#ffffff" : "#000000");
                     ctx.fillStyle = color;
                     const drawX = (x - offsetX + floorColsDiv2) * tileSizeTimesZoom;
                     const drawY = (y - offsetY + floorRowsDiv2) * tileSizeTimesZoom;
@@ -163,11 +190,14 @@
             if (chosenColor) {
                 const confirmChange = confirm("Change the tile colour?");
                 if (confirmChange) {
+                    console.log("Sending to server");
                     ws.send(JSON.stringify({ x: x - 1, y: y - 2, color: chosenColor }));
+                    console.log(JSON.stringify({ x: x - 1, y: y - 2, color: chosenColor }));
                     // This is where the timer comes in
                     canPlace = false;
                     //document.getElementById("colours").classList.add("hidden");
                     chosenColor = null;
+                    console.log("Updating CSS");
                     document.getElementById("red").classList.remove("selected");
                     document.getElementById("green").classList.remove("selected");
                     document.getElementById("blue").classList.remove("selected");
@@ -257,7 +287,7 @@
             updateOffset();
             drawGrid();
             requestAnimationFrame(animate);
-            window.location.hash = (offsetX || offsetY || zoom) ? `#x=${offsetX}&y=${offsetY}&zoom=${zoom}` : "";
+            window.location.hash = #x=${offsetX}&y=${offsetY}&zoom=${zoom}
         }
 
         window.addEventListener("wheel", (e) => {
@@ -282,10 +312,12 @@
         });
         function selectColour(button) {
             const buttons = document.querySelectorAll("button");
+            console.log("Updating CSS");
             buttons.forEach((button) => {
                 button.classList.remove("selected");
             });
             button.classList.add("selected");
+            console.log("Selecting", button.id);
             switch (button.id) {
                 case "red":
                     chosenColor = "#ff0000";
@@ -314,7 +346,9 @@
             }
         }
         document.addEventListener("DOMContentLoaded", () => {
+            console.log("Getting canvas");
             canvas = document.getElementById("canvas");
+            console.log("Getting context");
             ctx = canvas.getContext("2d");
             canvas.addEventListener("click", (e) => {
                 const rect = canvas.getBoundingClientRect();
@@ -326,6 +360,7 @@
             });
             resizeCanvas();
             animate();
+            console.log("Content loaded");
         });
     </script>
     <style>
