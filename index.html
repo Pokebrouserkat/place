@@ -47,7 +47,7 @@
                 canvasSize = parseInt(event.data);
                 return;
             }
-            console.log("Updating tile colours: " + event.data);
+            console.log("Updating tile colours: ", event.data);
             const data = JSON.parse(event.data);
             tileColors[`${data.x},${data.y}`] = data.color;
             //drawGrid();
@@ -62,37 +62,39 @@
         //    ws.send("auth");
         //};
 
-        console.log("Getting account info")
+        console.log("Getting account info");
 
         var username = localStorage.getItem("username");
         var password = localStorage.getItem("password");
 
         // Hash handling, by Copilot
         if (window.location.hash) {
+            console.log("Handling window hash");
             for (const param of window.location.hash.slice(1).split("&")) {
                 console.log(param);
                 const [key, value] = param.split("=");
                 switch (key) {
                     case "x":
                         offsetX = parseFloat(value);
-                        console.log("Navigating to X position");
+                        console.log("Navigating to X position ", offsetX);
                         break;
                     case "y":
-                        console.log("Navigating to Y position");
                         offsetY = parseFloat(value);
+                        console.log("Navigating to Y position ", offsetY);
                         break;
                     case "zoom":
-                        console.log("Setting zoom");
                         zoom = parseFloat(value);
+                        console.log("Setting zoom", zoom);
                         break;
                     case "name":
-                        console.log("Setting username");
                         username = value;
+                        console.log("Setting username", username);
                         break;
                     case "pass":
                     case "password":
                     case "pswd":
                         console.log("Setting password");
+                        // Did you think I'd log the password?
                         password = value;
                         break;
                     default:
@@ -108,7 +110,7 @@
         }
         if (!password) {
             console.log("No password set, asking for one");
-            password = prompt("Enter your password:", "(not hidden)");
+            password = prompt("Enter your password:", "(not very secure)");
         }
         if (username) {
             localStorage.setItem("username", username);
@@ -117,8 +119,7 @@
             localStorage.setItem("password", password);
         }
         if (!(username && password)) {
-            console.log("Username or password is falsey value (like blank string, or unset)");
-            console.log(username, ", ", password, ", ", !!username, ", ", !!password);
+            console.log("Username or password is invalid", username, password);
         }
 
         // Convert the username and password into an ID by concatenating them and hashing them
@@ -146,7 +147,7 @@
             }
             return tohex(H0) + tohex(H1) + tohex(H2) + tohex(H3) + tohex(H4);
         }
-        console.log("sha1 hashing username and password");
+        console.log("hashing username and password", "sha1");
         const id = sha1(username + password);
         ws.onopen = () => {
             console.log("Sending hash to server");
@@ -190,9 +191,8 @@
             if (chosenColor) {
                 const confirmChange = confirm("Change the tile colour?");
                 if (confirmChange) {
-                    console.log("Sending to server");
+                    console.log("Sending to server", { x: x - 1, y: y - 2, color: chosenColor });
                     ws.send(JSON.stringify({ x: x - 1, y: y - 2, color: chosenColor }));
-                    console.log(JSON.stringify({ x: x - 1, y: y - 2, color: chosenColor }));
                     // This is where the timer comes in
                     canPlace = false;
                     //document.getElementById("colours").classList.add("hidden");
@@ -246,7 +246,9 @@
 
                     setTimeout(function() {
                         canPlace = true;
+                        console.log("Ready for another pixel!");
                         document.getElementById("colours").classList.remove("hidden");
+                        console.log("Playing audio");
                         document.getElementsByTagName("audio")[0].play();
                     }, rateLimit * 1000);
                     //drawGrid();
