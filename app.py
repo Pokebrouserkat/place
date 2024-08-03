@@ -212,6 +212,6 @@ def root():
 
 @app.route("/boop.mp3")
 def boop():
-    return flask.send_file(os.path.join(app.root_path, "boop.mp3")), 200
+    return flask.send_from_directory(directory=os.path.join(app.root_path), filename="boop.mp3", as_attachment=False)
 
 app.run(host="0.0.0.0", port=port)
