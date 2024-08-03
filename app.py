@@ -14,6 +14,8 @@ port = 8080
 down = False
 # Path to boop.mp3, boop.wav, etc
 boops = ["boop.mp3"]
+# If true, refuse all pixel data outside of the canvas, otherwise allow it
+restrict = True
 
 #import websockets
 #import asyncio
@@ -125,15 +127,9 @@ def server(websocket):
     else:
         for pixel in pixels:
             websocket.send(pixel)
-#    if id not in ids:
-#        log("New ID added")
-#        ids[id] = time.time()
-#        saveIds()
-#    else:
-#        log("ID already exists")
     # Wait for messages
     try:
-        while not down:
+        while True:
             message = websocket.receive()
             log("Message (", end=message)
             if down:
@@ -149,6 +145,18 @@ def server(websocket):
             try:
                 # Parse the message
                 data = json.loads(message)
+                if restrict:
+                    # Check if it's more than gridSize away from the canvas in any direction
+                    if data["x"] >= gridSize or data["y"] >= gridSize or data["x"] < -gridSize or data["y"] < -gridSize:
+                        log(") Out of bounds")
+                        # This is a hack to re-allow them to place a pixel
+                        # Yeah, I could actually impliment a new message type, or better yet not even send the server invalid messages, but do I look like I would do that?
+                        # (Don't answer that)
+                        ids[id] -= timer
+                        # Explicitly close the connection instead of just returning
+                        clients.remove(websocket)
+                        websocket.close()
+                        return
                 if "colour" in data:
                     data["color"] = data["colour"] # I'm Canadian, but the parsing below uses American spelling since it's slightly shorter
                 # For performance reasons, pre-serialise the message
