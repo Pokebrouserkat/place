@@ -1,4 +1,4 @@
-# Infinite Tile Grid
+# Tile Grid
 
 This project is a tile grid where users can click on tiles to change their colors. The grid supports drawing, zooming, panning, and selecting colors from a predefined list. 
 
