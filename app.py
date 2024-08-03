@@ -13,7 +13,7 @@ port = 8080
 # Whether the server is down, and will not accept new connections or serve the document
 down = False
 # Path to boop.mp3, boop.wav, etc
-boops = []
+boops = ["/boop.mp3"]
 
 #import websockets
 #import asyncio
