@@ -364,6 +364,26 @@
             animate();
             console.log("Content loaded");
         });
+        // When the hash changes
+        window.addEventListener("hashchange", () => {
+            console.log("Hash changed");
+            const hash = window.location.hash.slice(1);
+            const params = hash.split("&");
+            for (const param of params) {
+                const [key, value] = param.split("=");
+                switch (key) {
+                    case "x":
+                        offsetX = parseFloat(value);
+                        break;
+                    case "y":
+                        offsetY = parseFloat(value);
+                        break;
+                    case "zoom":
+                        zoom = parseFloat(value);
+                        break;
+                }
+            }
+        });
     </script>
     <style>
         body {
