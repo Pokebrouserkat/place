@@ -21,6 +21,7 @@ import flask
 import flask_sock
 import json
 import time
+import os
 
 # All the connected clients
 clients = set()
@@ -211,6 +212,6 @@ def root():
 
 @app.route("/boop.mp3")
 def boop():
-    return flask.send_file("/boop.mp3")
+    return flask.send_file(os.path.join(app.root_path, "boop.mp3"))
 
 app.run(host="0.0.0.0", port=port)
