@@ -1,5 +1,5 @@
 # Path to presistent storage folder, where pixels.json and ids.json are stored
-path = "app/data"
+path = "data"
 # Path to index.html, rather than, well, """<!DOCTYPE html>...""" in the code
 index = "index.html"
 # size of the grid
@@ -13,7 +13,7 @@ port = 8080
 # Whether the server is down, and will not accept new connections or serve the document
 down = False
 # Path to boop.mp3, boop.wav, etc
-boops = ["/boop.mp3"]
+boops = ["boop.mp3"]
 
 #import websockets
 #import asyncio
