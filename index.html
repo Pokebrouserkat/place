@@ -11,15 +11,19 @@
         var rateLimit = -1;
         var canPlace = false;
         var didGetCanPlace = false;
+        
         ws.onmessage = (event) => {
+            console.log("Received message:", event.data);
             // Is it a number?
             if (!isNaN(event.data)) {
                 if (rateLimit === -1) {
                     rateLimit = parseInt(event.data);
+                    console.log("Rate limit set to:", rateLimit);
                     return;
                 }
                 if (!didGetCanPlace) {
                     didGetCanPlace = true;
+                    console.log("Can place set to true");
                     setTimeout(function() {
                         canPlace = true;
                         document.getElementById("colours").classList.remove("hidden");
@@ -28,26 +32,25 @@
                     return;
                 }
                 canvasSize = parseInt(event.data);
+                console.log("Canvas size set to:", canvasSize);
                 return;
             }
             const data = JSON.parse(event.data);
+            console.log("Parsed data:", data);
             tileColors[`${data.x},${data.y}`] = data.color;
             //drawGrid();
         };
+        
         ws.onclose = () => {
-            // THIS IS A TEMPORARY FIX
+            console.log("WebSocket closed, reloading page.");
             location.reload();
         };
-        // Authenticate the user
-        //ws.onopen = () => {
-        //    ws.send("auth");
-        //};
 
         var username = localStorage.getItem("username");
         var password = localStorage.getItem("password");
 
-        // Hash handling, by Copilot
         if (window.location.hash) {
+            console.log("Parsing hash parameters");
             for (const param of window.location.hash.slice(1).split("&")) {
                 const [key, value] = param.split("=");
                 switch (key) {
@@ -80,8 +83,6 @@
         localStorage.setItem("username", username);
         localStorage.setItem("password", password);
 
-        // Convert the username and password into an ID by concatenating them and hashing them
-        // ChatGPT wrote this function:
         function sha1(msg) {
             function rotl(n, s) { return n << s | n >>> 32 - s; }
             function tohex(i) { for (var h = "", s = 28; ; s -= 4) { h += (i >>> s & 0xf).toString(16); if (!s) return h; } }
@@ -105,8 +106,12 @@
             }
             return tohex(H0) + tohex(H1) + tohex(H2) + tohex(H3) + tohex(H4);
         }
+
         const id = sha1(username + password);
+        console.log("User ID:", id);
+        
         ws.onopen = () => {
+            console.log("WebSocket opened, sending ID");
             ws.send(id);
         };
 
@@ -125,8 +130,7 @@
         const acceleration = 0.4;
         const deceleration = 0.8;
 
-        //function resizeCanvas() {
-        const resizeCanvas = () => { // Bleh
+        const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             //drawGrid();
@@ -156,13 +160,13 @@
         }
 
         function handleTileClick(x, y, mouseX, mouseY) {
+            console.log("Tile clicked:", { x, y, mouseX, mouseY });
             if (chosenColor) {
                 const confirmChange = confirm("Change the tile colour?");
                 if (confirmChange) {
+                    console.log("Sending tile change:", { x, y, color: chosenColor });
                     ws.send(JSON.stringify({ x: x - 1, y: y - 2, color: chosenColor }));
-                    // This is where the timer comes in
                     canPlace = false;
-                    //document.getElementById("colours").classList.add("hidden");
                     chosenColor = null;
                     document.getElementById("red").classList.remove("selected");
                     document.getElementById("green").classList.remove("selected");
@@ -172,291 +176,115 @@
                     document.getElementById("cyan").classList.remove("selected");
                     document.getElementById("white").classList.remove("selected");
                     document.getElementById("black").classList.remove("selected");
-                    document.getElementById("red").classList.add("hidden");
-                    setTimeout(function() {
-                        document.getElementById("green").classList.add("hidden");
-                        setTimeout(function() {
-                            document.getElementById("blue").classList.add("hidden");
-                            setTimeout(function() {
-                                document.getElementById("yellow").classList.add("hidden");
-                                setTimeout(function() {
-                                    document.getElementById("purple").classList.add("hidden");
-                                    setTimeout(function() {
-                                        document.getElementById("cyan").classList.add("hidden");
-                                        setTimeout(function() {
-                                            document.getElementById("white").classList.add("hidden");
-                                            setTimeout(function() {
-                                                document.getElementById("black").classList.add("hidden");
-                                                if (rateLimit > 1) {
-                                                    setTimeout(function() {
-                                                        document.getElementById("colours").classList.add("hidden");
-                                                        setTimeout(function() {
-                                                            document.getElementById("red").classList.remove("hidden");
-                                                            document.getElementById("green").classList.remove("hidden");
-                                                            document.getElementById("blue").classList.remove("hidden");
-                                                            document.getElementById("yellow").classList.remove("hidden");
-                                                            document.getElementById("purple").classList.remove("hidden");
-                                                            document.getElementById("cyan").classList.remove("hidden");
-                                                            document.getElementById("white").classList.remove("hidden");
-                                                            document.getElementById("black").classList.remove("hidden");
-                                                        }, 100);
-                                                    }, 100);
-                                                }
-                                            }, 100);
-                                        }, 100);
-                                    }, 100);
-                                }, 100);
-                            }, 100);
-                        }, 100);
-                    }, 100);
-
-                    setTimeout(function() {
-                        canPlace = true;
-                        document.getElementById("colours").classList.remove("hidden");
-                        document.getElementsByTagName("audio")[0].play();
-                    }, rateLimit * 1000);
-                    //drawGrid();
                 }
             }
         }
 
-        document.addEventListener("keydown", (e) => {
-            keysPressed[e.key] = true;
-        });
-
-        document.addEventListener("keyup", (e) => {
-            keysPressed[e.key] = false;
-        });
-
-        function updateOffset() {
-            if (keysPressed["ArrowUp"] && !keysPressed["ArrowDown"]) {
-                velocity.y = Math.max(velocity.y - acceleration, -maxSpeed);
-            } else if (keysPressed["ArrowDown"] && !keysPressed["ArrowUp"]) {
-                velocity.y = Math.min(velocity.y + acceleration, maxSpeed);
-            } else {
-                velocity.y = Math.abs(velocity.y) < deceleration ? 0 : velocity.y + (velocity.y > 0 ? -deceleration : deceleration);
-            }
-
-            if (keysPressed["ArrowLeft"] && !keysPressed["ArrowRight"]) {
-                velocity.x = Math.max(velocity.x - acceleration, -maxSpeed);
-            } else if (keysPressed["ArrowRight"] && !keysPressed["ArrowLeft"]) {
-                velocity.x = Math.min(velocity.x + acceleration, maxSpeed);
-            } else {
-                velocity.x = Math.abs(velocity.x) < deceleration ? 0 : velocity.x + (velocity.x > 0 ? -deceleration : deceleration);
-            }
-
-            offsetX += velocity.x / (tileSize * zoom);
-            offsetY += velocity.y / (tileSize * zoom);
-        }
-
-        function animate() {
-            updateOffset();
-            drawGrid();
-            requestAnimationFrame(animate);
-            window.location.hash = (offsetX || offsetY || zoom) ? `#x=${offsetX}&y=${offsetY}&zoom=${zoom}` : "";
-        }
-
-        window.addEventListener("wheel", (e) => {
-            e.preventDefault();
-            const zoomFactor = 1.1;
-            if (e.deltaY > 0) {
-                zoom /= zoomFactor;
-            } else {
-                zoom *= zoomFactor;
-            }
-            zoom = Math.max(0.2, Math.min(zoom, 20)); // If you zoom out too much, it lags really badly
-            //drawGrid();
-        });
-
-        window.addEventListener("resize", resizeCanvas);
-
-        // Prevent default scrolling behavior
-        window.addEventListener("keydown", (e) => {
-            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-                e.preventDefault();
-            }
-        });
-        function selectColour(button) {
-            const buttons = document.querySelectorAll("button");
-            buttons.forEach((button) => {
-                button.classList.remove("selected");
-            });
-            button.classList.add("selected");
-            switch (button.id) {
-                case "red":
-                    chosenColor = "#ff0000";
-                    break;
-                case "green":
-                    chosenColor = "#00ff00";
-                    break;
-                case "blue":
-                    chosenColor = "#0000ff";
-                    break;
-                case "yellow":
-                    chosenColor = "#ffff00";
-                    break;
-                case "purple":
-                    chosenColor = "#ff00ff";
-                    break;
-                case "cyan":
-                    chosenColor = "#00ffff";
-                    break;
-                case "white":
-                    chosenColor = "#ffffff";
-                    break;
-                case "black":
-                    chosenColor = "#000000";
-                    break;
-            }
-        }
         document.addEventListener("DOMContentLoaded", () => {
+            console.log("Document loaded");
             canvas = document.getElementById("canvas");
             ctx = canvas.getContext("2d");
-            canvas.addEventListener("click", (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                const x = Math.floor((mouseX / (tileSize * zoom)) + offsetX - Math.floor(canvas.width / (tileSize * zoom) / 2));
-                const y = Math.floor((mouseY / (tileSize * zoom)) + offsetY - Math.floor(canvas.height / (tileSize * zoom) / 2));
-                handleTileClick(x, y, e.clientX, e.clientY);
-            });
             resizeCanvas();
-            animate();
+            window.addEventListener("resize", resizeCanvas);
+            canvas.addEventListener("click", (event) => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                const tileX = Math.floor((mouseX / (tileSize * zoom)) + offsetX - (canvas.width / (tileSize * zoom) / 2));
+                const tileY = Math.floor((mouseY / (tileSize * zoom)) + offsetY - (canvas.height / (tileSize * zoom) / 2));
+                console.log("Canvas click:", { mouseX, mouseY, tileX, tileY });
+                handleTileClick(tileX, tileY, mouseX, mouseY);
+            });
+            document.addEventListener("keydown", (event) => {
+                keysPressed[event.key] = true;
+            });
+            document.addEventListener("keyup", (event) => {
+                keysPressed[event.key] = false;
+            });
+            const move = () => {
+                if (keysPressed["ArrowUp"] || keysPressed["w"]) {
+                    velocity.y -= acceleration;
+                }
+                if (keysPressed["ArrowDown"] || keysPressed["s"]) {
+                    velocity.y += acceleration;
+                }
+                if (keysPressed["ArrowLeft"] || keysPressed["a"]) {
+                    velocity.x -= acceleration;
+                }
+                if (keysPressed["ArrowRight"] || keysPressed["d"]) {
+                    velocity.x += acceleration;
+                }
+                velocity.x *= deceleration;
+                velocity.y *= deceleration;
+                offsetX += velocity.x;
+                offsetY += velocity.y;
+                if (Math.abs(velocity.x) < 0.1) {
+                    velocity.x = 0;
+                }
+                if (Math.abs(velocity.y) < 0.1) {
+                    velocity.y = 0;
+                }
+                //drawGrid();
+                requestAnimationFrame(move);
+            };
+            move();
         });
     </script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #000000;
-        }
-        #colours {
-            position: absolute;
-            display: none;
-        }
-        canvas {
-            display: block;
-        }
-        #red {
-            background-color: #ff0000;
-            border: 0.5vh solid #aa0000;
-        }
-        #green {
-            background-color: #00ff00;
-            border: 0.5vh solid #00aa00;
-        }
-        #blue {
-            background-color: #0000ff;
-            border: 0.5vh solid #0000aa;
-        }
-        #yellow {
-            background-color: #ffff00;
-            border: 0.5vh solid #aaaa00;
-        }
-        #purple {
-            background-color: #ff00ff;
-            border: 0.5vh solid #aa00aa;
-        }
-        #cyan {
-            background-color: #00ffff;
-            border: 0.5vh solid #00aaaa;
-        }
-        #white {
-            background-color: #ffffff;
-            border: 0.5vh solid #aaaaaa;
-        }
-        #black {
-            background-color: #000000;
-            border: 0.5vh solid #333333;
-        }
-        button:hover {
-            transform: scale(1.1);
-        }
-        #red:active {
-            box-shadow: 0 0 1vh 1vh #aa0000;
-        }
-        #green:active {
-            box-shadow: 0 0 1vh 1vh #00aa00;
-        }
-        #blue:active {
-            box-shadow: 0 0 1vh 1vh #0000aa;
-        }
-        #yellow:active {
-            box-shadow: 0 0 1vh 1vh #aaaa00;
-        }
-        #purple:active {
-            box-shadow: 0 0 1vh 1vh #aa00aa;
-        }
-        #cyan:active {
-            box-shadow: 0 0 1vh 1vh #00aaaa;
-        }
-        #white:active {
-            box-shadow: 0 0 1vh 1vh #aaaaaa;
-        }
-        #black:active {
-            box-shadow: 0 0 1vh 1vh #333333;
-        }
-        #red.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #aa0000;
-        }
-        #green.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #00aa00;
-        }
-        #blue.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #0000aa;
-        }
-        #yellow.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #aaaa00;
-        }
-        #purple.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #aa00aa;
-        }
-        #cyan.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #00aaaa;
-        }
-        #white.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #aaaaaa;
-        }
-        #black.selected {
-            box-shadow: 0 0 0.5vh 0.5vh #333333;
-        }
-        #red, #green, #blue, #yellow, #purple, #cyan, #white, #black {
-            transition: all 0.5s;
-            width: 5vh;
-            height: 5vh;
-            margin: 0.5vh;
-            border-radius: 0;
-            cursor: pointer;
-        }
-        #colours {
-            display: flex;
-            flex-wrap: wrap;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            transition: all 1s;
         }
         .hidden {
-            filter: blur(1vh);
-            opacity: 0;
-            transition: all 1s;
+            display: none;
         }
+        .selected {
+            border: 2px solid black;
+        }
+        #colours {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        #colours div {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        #red { background-color: red; }
+        #green { background-color: green; }
+        #blue { background-color: blue; }
+        #yellow { background-color: yellow; }
+        #purple { background-color: purple; }
+        #cyan { background-color: cyan; }
+        #white { background-color: white; }
+        #black { background-color: black; }
     </style>
 </head>
 <body>
-    <div id="colours" class="hidden">
-        <button onclick="selectColour(this)" id="red"></button>
-        <button onclick="selectColour(this)" id="green"></button>
-        <button onclick="selectColour(this)" id="blue"></button>
-        <button onclick="selectColour(this)" id="yellow"></button>
-        <button onclick="selectColour(this)" id="purple"></button>
-        <button onclick="selectColour(this)" id="cyan"></button>
-        <button onclick="selectColour(this)" id="white"></button>
-        <button onclick="selectColour(this)" id="black"></button>
-    </div>
-    <!-- TODO: Add a timer to show the remaining time -->
     <canvas id="canvas"></canvas>
-    <audio src="/boop.mp3" preload="auto" style="display: none;" />
+    <div id="colours" class="hidden">
+        <div id="red" onclick="selectColor('red')"></div>
+        <div id="green" onclick="selectColor('green')"></div>
+        <div id="blue" onclick="selectColor('blue')"></div>
+        <div id="yellow" onclick="selectColor('yellow')"></div>
+        <div id="purple" onclick="selectColor('purple')"></div>
+        <div id="cyan" onclick="selectColor('cyan')"></div>
+        <div id="white" onclick="selectColor('white')"></div>
+        <div id="black" onclick="selectColor('black')"></div>
+    </div>
+    <audio src="ding.mp3" preload="auto"></audio>
+    <script>
+        function selectColor(color) {
+            console.log("Color selected:", color);
+            if (chosenColor) {
+                document.getElementById(chosenColor).classList.remove("selected");
+            }
+            chosenColor = color;
+            document.getElementById(color).classList.add("selected");
+        }
+    </script>
 </body>
 </html>
