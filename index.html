@@ -48,9 +48,7 @@
 
         // Hash handling, by Copilot
         if (window.location.hash) {
-            const hash = window.location.hash.slice(1);
-            const params = hash.split("&");
-            for (const param of params) {
+            for (const param of window.location.hash.slice(1).split("&")) {
                 const [key, value] = param.split("=");
                 switch (key) {
                     case "x":
