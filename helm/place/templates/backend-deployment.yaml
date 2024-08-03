@@ -18,12 +18,11 @@ spec:
         - name: place-backend
           image: {{ print .Values.images.backend .Values.tag }}
           imagePullPolicy: Always
-          envFrom:
           ports:
-          - containerPort: 8080
-        volumeMounts:
-          - mountPath: /data
-            name: place-data-volume
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /data
+              name: place-data-volume
       imagePullSecrets:
       - name: github-registry
       volumes:
