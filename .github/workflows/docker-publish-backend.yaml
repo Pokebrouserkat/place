@@ -69,7 +69,7 @@ jobs:
         id: get-tag
         run: |
           BACKEND_TAG=$(echo "${{ steps.meta.outputs.tags }}" | grep "${{ github.ref_name }}-" | head -n 1)
-          echo "BACKEND_TAG=${BACKEND_TAG}" >> $GITHUB_OUTPUT
+          echo "BACKEND_TAG=TEST${BACKEND_TAG}" >> $GITHUB_OUTPUT
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
