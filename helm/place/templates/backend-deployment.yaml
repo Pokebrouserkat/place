@@ -21,9 +21,12 @@ spec:
           envFrom:
           ports:
           - containerPort: 8080
+        volumeMounts:
+          - mountPath: /data
+            name: place-data-volume
       imagePullSecrets:
       - name: github-registry
       volumes:
-      - name: place-storage
-        persistentVolumeClaim:
-          claimName: place-data-pvc
+        - name: place-data-volume
+          persistentVolumeClaim:
+            claimName: place-data-pvc
