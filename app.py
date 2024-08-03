@@ -12,8 +12,6 @@ timer = 60 * 5
 port = 8080
 # Whether the server is down, and will not accept new connections or serve the document
 down = False
-# Path to boop.mp3, boop.wav, etc
-boops = ["boop.mp3"]
 # If true, refuse all pixel data outside of the canvas, otherwise allow it
 restrict = True
 
@@ -204,27 +202,15 @@ log("Starting server")
 with open(index, "r") as f:
     index = f.read()
 @app.route("/")
-def root(): # Can't call it index because that's the name of the file
-    #return flask.send_file(index)
+def root():
     global down
     global index
     if down:
         return index, 100
     return index, 200
-    #return flask.send_file(index, download_name="index.html")
 
 @app.route("/boop.mp3")
 def boop():
-    global boops
-    return flask.send_file(boops[0])
-
-# Catch all other requests
-@app.route("/<path:path>")
-def catchAll(path):
-    response = flask.make_response("")
-    response.status_code = 404
-    # I like caching
-    response.cache_control.max_age = 3600
-    return response
+    return flask.send_file("/boop.mp3")
 
 app.run(host="0.0.0.0", port=port)
