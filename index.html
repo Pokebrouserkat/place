@@ -177,7 +177,7 @@
             var floorRowsDiv2 = rows >> 1;
             for (let x = startX; x < startX + cols; x++) {
                 for (let y = startY; y < startY + rows; y++) {
-                    const color = tileColors[${x},${y}] || (((Math.abs(x) < canvasSize) && (Math.abs(y) < canvasSize)) ? "#ffffff" : "#000000");
+                    const color = tileColors[`${x},${y}`] || (((Math.abs(x) < canvasSize) && (Math.abs(y) < canvasSize)) ? "#ffffff" : "#000000");
                     ctx.fillStyle = color;
                     const drawX = (x - offsetX + floorColsDiv2) * tileSizeTimesZoom;
                     const drawY = (y - offsetY + floorRowsDiv2) * tileSizeTimesZoom;
