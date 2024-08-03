@@ -205,80 +205,10 @@ def root(): # Can't call it index because that's the name of the file
     return index, 200
     #return flask.send_file(index, download_name="index.html")
 
-
-
-@app.route("/boop")
+@app.route("/boop.mp3")
 def boop():
     global boops
-    # Check the accept header and return a boop in the appropriate format
-    accept = flask.request.headers.get("Accept", "")
-    # Prioritise lossless compression, then lossless uncompressed, then lossy
-    if len(boops) != 0:
-        if "audio/ogg" in accept:
-            # Find a .ogg boop
-            for boop in boops:
-                if boop.endswith(".ogg"):
-                    return flask.send_file(boop)
-        if "audio/wav" in accept:
-            # Find a .wav boop
-            for boop in boops:
-                if boop.endswith(".wav"):
-                    return flask.send_file(boop)
-        if "audio/flac" in accept:
-            # Find a .flac boop
-            for boop in boops:
-                if boop.endswith(".flac"):
-                    return flask.send_file(boop)
-        if "audio/aac" in accept:
-            # Find a .aac boop
-            for boop in boops:
-                if boop.endswith(".aac"):
-                    return flask.send_file(boop)
-        if "audio/mpeg" in accept:
-            # Find a .mp3 boop
-            for boop in boops:
-                if boop.endswith(".mp3"):
-                    return flask.send_file(boop)
-    # We have no boops that match what the client asked for, so here are some special cases
-        if "audio/*" in accept or "*/*" in accept:
-            # Find the first boop
-            return flask.send_file(boops[0])
-    if "text/html" in accept:
-        # Return a page with a link to the boop
-        return """<!DOCTYPE html><html><head><title>Boop</title></head><body><audio controls src="/boop"></audio></body></html>"""
-    if "application/json" in accept:
-        # Return *all* the boops
-        return json.dumps(boops) # As this is outside the `if len(boops) != 0:` block, there is a possibility of returning an empty list ([]), which still perfectly valid and there is no need to fix it.
-    if "text/plain" in accept:
-        # Return "boop"
-        response = flask.make_response("boop")
-        response.headers["Content-Type"] = "text/plain"
-        return response
-    # Return a 406 Not Acceptable
-    return "", 406
-
-@app.route("/boop<string:ext>")
-def boopExt(ext):
-    global boops
-    # Find a boop with the extension
-    for boop in boops:
-        if boop.endswith(ext):
-            # I like caching
-            return flask.send_file(boop, as_attachment=True, download_name="boop" + ext, max_age=3600)
-    # Special cases
-    if ext == ".html":
-        # Return a page with a link to the boop
-        return """<!DOCTYPE html><html><head><title>Boop</title></head><body><audio controls src="/boop"></audio></body></html>"""
-    if ext == ".json":
-        # Return *all* the boops
-        return json.dumps(boops)
-    if ext == ".txt":
-        # Return "boop"
-        response = flask.make_response("boop")
-        response.headers["Content-Type"] = "text/plain"
-        return response
-    # Return a 404 Not Found
-    return catchAll("boop" + ext)
+    return flask.send_file(boops[0])
 
 # Catch all other requests
 @app.route("/<path:path>")
