@@ -6,8 +6,6 @@ metadata:
     nginx.ingress.kubernetes.io/from-www-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: 12m
     cert-manager.io/cluster-issuer: letsencrypt-cluster-issuer
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "server: hide";
 spec:
   ingressClassName: nginx
   tls:
