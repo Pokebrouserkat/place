@@ -16,5 +16,7 @@ jobs:
       - build-backend
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/helm-deploy-main.yaml
+    with:
+      BACKEND_TAG: ${{ needs.build-backend.outputs.BACKEND_TAG }}
     secrets:
       LKE_CONTEXT: ${{ secrets.LKE_CONTEXT }}

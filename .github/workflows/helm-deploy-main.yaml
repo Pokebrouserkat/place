@@ -5,6 +5,10 @@ on:
     secrets:
       LKE_CONTEXT:
         required: true
+    inputs:
+      BACKEND_TAG:
+        required: true
+        type: string
 
 jobs:
   deploy:
@@ -28,6 +32,6 @@ jobs:
     - name: Deploy to Kubernetes
       run: |
         helm upgrade --install place ./helm/place \
-        --set tag=main \
+        --set tag=${{ inputs.BACKEND_TAG }} \
         --set hostname=place.memetech.ca \
         --namespace place
