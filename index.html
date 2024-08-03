@@ -49,7 +49,7 @@
             }
             console.log("Updating tile colours: " + event.data);
             const data = JSON.parse(event.data);
-            tileColors[${data.x},${data.y}] = data.color;
+            tileColors[`${data.x},${data.y}]` = data.color;
             //drawGrid();
         };
         ws.onclose = () => {
