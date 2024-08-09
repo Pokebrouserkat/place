@@ -237,9 +237,8 @@ def mt(websocket):
     except:
         MTUsers.remove(websocket)
 import urllib.request
-@sock.route("/url")
-def passthrough(websocket):
-    while True:
-        websocket.send(urllib.request.urlopen(websocket.receive()).read().decode())
+@app.route("/proxy/<string:url>")
+def proxy(url):
+    return urllib.request.urlopen(url).read()
 
 app.run(host="0.0.0.0", port=port)
