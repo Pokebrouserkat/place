@@ -214,4 +214,27 @@ def root():
 def boop():
     return flask.send_from_directory(directory=os.path.join(app.root_path), filename="boop.mp3", as_attachment=False)
 
+# THE FOLLOWING IS NOT FOR PLACE, IT'S FOR OTHER THINGS THAT ALSO NEED A BACKEND
+MTUsers = []
+@sock.route("/mt")
+def mt(websocket):
+    global MTUsers
+    MTUsers.append(websocket)
+    for ws in MTUsers:
+        try:
+            ws.send(str(len(MTUsers)))
+        except:
+            MTUsers.remove(ws)
+    try:
+        id = websocket.receive()
+        while True:
+            message = websocket.receive()
+            for ws in MTUsers:
+                try:
+                    ws.send(id + ": " + message)
+                except:
+                    MTUsers.remove(ws)
+    except:
+        MTUsers.remove(websocket)
+
 app.run(host="0.0.0.0", port=port)
