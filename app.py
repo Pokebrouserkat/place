@@ -26,6 +26,7 @@ import flask_sock
 import json
 import time
 import os
+from flask_cors import CORS
 
 # All the connected clients
 clients = set()
@@ -63,6 +64,8 @@ except:
     pass
 
 app = flask.Flask(__name__)
+
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 sock = flask_sock.Sock(app)
 
