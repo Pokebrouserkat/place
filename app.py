@@ -214,7 +214,7 @@ def root():
 def boop():
     return flask.send_from_directory(directory=os.path.join(app.root_path), filename="boop.mp3", as_attachment=False)
 
-# THE FOLLOWING IS NOT FOR PLACE, IT'S FOR OTHER THINGS THAT ALSO NEED A BACKEND
+# Now for the random other stuff that has nothing to do with this but I need a backend and here we are
 MTUsers = []
 @sock.route("/mt")
 def mt(websocket):
@@ -240,5 +240,25 @@ import urllib.request
 @app.route("/proxy/<string:url>")
 def proxy(url):
     return urllib.request.urlopen(url).read()
+ring = []
+try:
+    with open(path + "ring.json", "r") as f:
+        ring = json.load(f)
+except:
+    pass
+@app.route("/ring", methods=["POST"])
+def ring():
+    global ring
+    # The request body is text/plain, so we can just read it
+    url = flask.request.data.decode("utf-8").split("//")
+    if url[0] not in ["http:", "https:"]:
+        return "Invalid URL", 400
+    url = url[1].split("/")[0].split("?")[0].split("#")[0].split(":")[0]
+    if url in ring:
+        return "Already in the ring", 200
+    ring.append(url)
+    with open(path + "ring.json", "w") as f:
+        json.dump(ring, f)
+    return "Added to the ring", 200
 
 app.run(host="0.0.0.0", port=port)
