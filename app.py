@@ -253,6 +253,9 @@ try:
         ring = json.load(f)
 except:
     pass
+
+from urllib.parse import urlparse
+_=""" ChatGPT rewrote this
 @app.route("/ring", methods=["POST"])
 def ringpoint():
     global ring
@@ -290,6 +293,40 @@ def ringpoint():
     if index == len(ring) - 1:
         return ring[-2] + "\n" + ring[0] + "Welcome!", 200, obviousHeaders
     return ring[index - 1] + "\n" + ring[index + 1] + "Welcome!", 200, obviousHeaders
+"""
+
+@app.route("/ring", methods=["POST"])
+def ringendpoint():
+    global ring
+    data = flask.request.data.decode("utf-8")
+    
+    parsed_url = urlparse(data)
+    if parsed_url.scheme not in ["http", "https"] or not parsed_url.netloc:
+        return f"{data}\n{data}\nInvalid URL", 400, obviousHeaders
+    
+    hostname = parsed_url.netloc.split(":")[0]
+    
+    if len(ring) == 0:
+        ring.append(hostname)
+        with open(path + "ring.json", "w") as f:
+            json.dump(ring, f)
+        return f"{data}\n{data}\nThere's nobody else here yet...", 200, obviousHeaders
+    
+    if hostname in ring:
+        index = ring.index(hostname)
+        prev_url = ring[index - 1] if index > 0 else ring[-1]
+        next_url = ring[index + 1] if index < len(ring) - 1 else ring[0]
+        return f"{prev_url}\n{next_url}\nWelcome back!", 200, obviousHeaders
+    
+    ring.append(hostname)
+    with open(path + "ring.json", "w") as f:
+        json.dump(ring, f)
+    
+    index = ring.index(hostname)
+    prev_url = ring[index - 1] if index > 0 else ring[-1]
+    next_url = ring[index + 1] if index < len(ring) - 1 else ring[0]
+    return f"{prev_url}\n{next_url}\nWelcome!", 200, obviousHeaders
+
 
 @app.after_request
 def apply_caching(response):
