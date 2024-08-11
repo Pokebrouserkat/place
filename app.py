@@ -14,6 +14,10 @@ port = 8080
 down = False
 # If true, refuse all pixel data outside of the canvas, otherwise allow it
 restrict = True
+# I should not have to specify this, it should be the default, but I guess I have to
+obviousHeaders = {
+    "Access-Control-Allow-Origin": "*"
+}
 
 #import websockets
 #import asyncio
