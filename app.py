@@ -254,7 +254,7 @@ try:
 except:
     pass
 @app.route("/ring", methods=["POST"])
-def ring():
+def ringpoint():
     global ring
     data = flask.request.data.decode("utf-8")
     # The request body is text/plain, so we can just read it
