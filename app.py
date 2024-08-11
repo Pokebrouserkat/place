@@ -291,4 +291,9 @@ def ring():
         return ring[-2] + "\n" + ring[0] + "Welcome!", 200, obviousHeaders
     return ring[index - 1] + "\n" + ring[index + 1] + "Welcome!", 200, obviousHeaders
 
+@app.after_request
+def apply_caching(response):
+    response.headers["Referrer-Policy"] = "no-referrer-when-downgrade"  # Or any other policy you prefer
+    return response
+
 app.run(host="0.0.0.0", port=port)
