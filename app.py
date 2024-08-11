@@ -314,8 +314,8 @@ def ringendpoint():
     
     if hostname in ring:
         index = ring.index(hostname)
-        prev_url = ring[index - 1] if index > 0 else ring[-1]
-        next_url = ring[index + 1] if index < len(ring) - 1 else ring[0]
+        prev_url = "https://" + ring[index - 1] if index > 0 else ring[-1]
+        next_url = "https://" + ring[index + 1] if index < len(ring) - 1 else ring[0]
         return f"{prev_url}\n{next_url}\nWelcome back!", 200, obviousHeaders
     
     ring.append(hostname)
@@ -323,8 +323,8 @@ def ringendpoint():
         json.dump(ring, f)
     
     index = ring.index(hostname)
-    prev_url = ring[index - 1] if index > 0 else ring[-1]
-    next_url = ring[index + 1] if index < len(ring) - 1 else ring[0]
+    prev_url = "https://" + ring[index - 1] if index > 0 else ring[-1]
+    next_url = "https://" + ring[index + 1] if index < len(ring) - 1 else ring[0]
     return f"{prev_url}\n{next_url}\nWelcome!", 200, obviousHeaders
 
 
