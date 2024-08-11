@@ -253,16 +253,39 @@ except:
 @app.route("/ring", methods=["POST"])
 def ring():
     global ring
+    data = flask.request.data.decode("utf-8")
     # The request body is text/plain, so we can just read it
-    url = flask.request.data.decode("utf-8").split("//")
+    url = data.split("//")
     if url[0] not in ["http:", "https:"]:
-        return "Invalid URL", 400, obviousHeaders
+        return data + "\n" + data + "\nInvalid URL", 400, obviousHeaders
+    if len(ring) == 0:
+        ring.append(url[1].split("/")[0].split("?")[0].split("#")[0].split(":")[0])
+        with open(path + "ring.json", "w") as f:
+            json.dump(ring, f)
+        return data + "\n" + data + "\nThere's nobody else here yet...", 200, obviousHeaders
+    if len(url) == 1:
+        if url[0] in ring:
+            return ring[ring.index(url[0]) - 1] + "\n" + ring[ring.index(url[0]) + 1] + "You're the only one here...", 200, obviousHeaders
+        ring.append(url[0])
+        return url[0] + "\n" + url[0] + "\nWelcome!", 200, obviousHeaders
     url = url[1].split("/")[0].split("?")[0].split("#")[0].split(":")[0]
     if url in ring:
-        return "Already in the ring", 200, obviousHeaders
+        # Return the previous and next URLs
+        index = ring.index(url)
+        if index == 0:
+            return ring[-1] + "\n" + ring[1] + "Welcome back!", 200, obviousHeaders
+        if index == len(ring) - 1:
+            return ring[-2] + "\n" + ring[0] + "Welcome back!", 200, obviousHeaders
+        return ring[index - 1] + "\n" + ring[index + 1] + "Welcome back!", 200, obviousHeaders
     ring.append(url)
     with open(path + "ring.json", "w") as f:
         json.dump(ring, f)
-    return "Added to the ring", 200, obviousHeaders
+    # Return the previous and next URLs
+    index = ring.index(url)
+    if index == 0:
+        return ring[-1] + "\n" + ring[1] + "Welcome!", 200, obviousHeaders
+    if index == len(ring) - 1:
+        return ring[-2] + "\n" + ring[0] + "Welcome!", 200, obviousHeaders
+    return ring[index - 1] + "\n" + ring[index + 1] + "Welcome!", 200, obviousHeaders
 
 app.run(host="0.0.0.0", port=port)
