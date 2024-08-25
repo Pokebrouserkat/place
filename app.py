@@ -327,6 +327,9 @@ def ringendpoint():
     next_url = "https://" + ring[index + 1] if index < len(ring) - 1 else ring[0]
     return f"{prev_url}\n{next_url}\nWelcome!", 200, obviousHeaders
 
+@app.route("/httpcodes/<int:code>")
+def httpcodes(code):
+    return "<script>let x=new XMLHttpRequest();x.open('GET',location.href,false);x.send();alert(x.statusText);</script>", code, obviousHeaders
 
 @app.after_request
 def apply_caching(response):
