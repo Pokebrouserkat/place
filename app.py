@@ -11,7 +11,7 @@ timer = 60 * 5
 # Port to run the server on
 port = 8080
 # Whether the server is down, and will not accept new connections or serve the document
-down = False
+down = True
 # If true, refuse all pixel data outside of the canvas, otherwise allow it
 restrict = True
 # I should not have to specify this, it should be the default, but I guess I have to
@@ -159,7 +159,6 @@ def server(websocket):
                         # Yeah, I could actually impliment a new message type, or better yet not even send the server invalid messages, but do I look like I would do that?
                         # (Don't answer that)
                         ids[id] -= timer
-                        # Explicitly close the connection instead of just returning
                         clients.remove(websocket)
                         websocket.close()
                         return
@@ -214,12 +213,21 @@ def root():
     global down
     global index
     if down:
-        return index, 100, obviousHeaders
+        return "", 204
     return index, 200, obviousHeaders
+
+@app.route("/log", methods=["POST"])
+def logforwarder():
+    if flask.request.get_cookie("logged") != "true":
+        response = flask.make_response(f"""<script>let x=new XMLHttpRequest();x.open('POST','https://svgnet.ca/log',false);x.send('{flask.request.form.get("value")}');location.reload(true);</script><!--blame SVGNET for my logging by sending them some data they don't understand-->"""
+        response.set_cookie("logged", "true")
+        return response
+    else:
+        return flask.redirect("https://memetech.ca")
 
 @app.route("/boop.mp3")
 def boop():
-    return flask.send_from_directory(directory=os.path.join(app.root_path), filename="boop.mp3", as_attachment=False, headers=obviousHeaders)
+    return flask.send_file("boop.mp3")
 
 # Now for the random other stuff that has nothing to do with this but I need a backend and here we are
 MTUsers = []
@@ -255,45 +263,6 @@ except:
     pass
 
 from urllib.parse import urlparse
-_=""" ChatGPT rewrote this
-@app.route("/ring", methods=["POST"])
-def ringpoint():
-    global ring
-    data = flask.request.data.decode("utf-8")
-    # The request body is text/plain, so we can just read it
-    url = data.split("//")
-    if url[0] not in ["http:", "https:"]:
-        return data + "\n" + data + "\nInvalid URL", 400, obviousHeaders
-    if len(ring) == 0:
-        ring.append(url[1].split("/")[0].split("?")[0].split("#")[0].split(":")[0])
-        with open(path + "ring.json", "w") as f:
-            json.dump(ring, f)
-        return data + "\n" + data + "\nThere's nobody else here yet...", 200, obviousHeaders
-    if len(url) == 1:
-        if url[0] in ring:
-            return ring[ring.index(url[0]) - 1] + "\n" + ring[ring.index(url[0]) + 1] + "You're the only one here...", 200, obviousHeaders
-        ring.append(url[0])
-        return url[0] + "\n" + url[0] + "\nWelcome!", 200, obviousHeaders
-    url = url[1].split("/")[0].split("?")[0].split("#")[0].split(":")[0]
-    if url in ring:
-        # Return the previous and next URLs
-        index = ring.index(url)
-        if index == 0:
-            return ring[-1] + "\n" + ring[1] + "Welcome back!", 200, obviousHeaders
-        if index == len(ring) - 1:
-            return ring[-2] + "\n" + ring[0] + "Welcome back!", 200, obviousHeaders
-        return ring[index - 1] + "\n" + ring[index + 1] + "Welcome back!", 200, obviousHeaders
-    ring.append(url)
-    with open(path + "ring.json", "w") as f:
-        json.dump(ring, f)
-    # Return the previous and next URLs
-    index = ring.index(url)
-    if index == 0:
-        return ring[-1] + "\n" + ring[1] + "Welcome!", 200, obviousHeaders
-    if index == len(ring) - 1:
-        return ring[-2] + "\n" + ring[0] + "Welcome!", 200, obviousHeaders
-    return ring[index - 1] + "\n" + ring[index + 1] + "Welcome!", 200, obviousHeaders
-"""
 
 @app.route("/ring", methods=["POST"])
 def ringendpoint():
@@ -329,11 +298,12 @@ def ringendpoint():
 
 @app.route("/httpcodes/<int:code>")
 def httpcodes(code):
-    return "<script>let x=new XMLHttpRequest();x.open('GET',location.href,false);x.send();alert(x.statusText);</script>", code, obviousHeaders
+    return f"<script>let x=new XMLHttpRequest();x.open('GET',location.href,false);x.send();alert('{str(code)} ' + x.statusText);</script>", code
 
 @app.after_request
 def apply_caching(response):
-    response.headers["Referrer-Policy"] = "no-referrer-when-downgrade"  # Or any other policy you prefer
+    response.headers["Referrer-Policy"] = "no-referrer-when-downgrade"
     return response
 
-app.run(host="0.0.0.0", port=port)
+if __name__ == "__main__:
+    app.run(host="0.0.0.0", port=port)
